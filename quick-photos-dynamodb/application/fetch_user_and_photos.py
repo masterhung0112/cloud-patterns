@@ -6,7 +6,6 @@ dynamodb = boto3.client('dynamodb')
 
 USER = "jacksonjason"
 
-
 def fetch_user_and_photos(username):
     resp = dynamodb.query(
         TableName='quick-photos',

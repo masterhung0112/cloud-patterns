@@ -38,8 +38,37 @@ The Reaction entity is a child entity of a particular photo entity. There is a o
 
 # Run
 
-```python
+```bash
 python scripts/create_table.py
 python scripts/bulk_load_table.py
 python scripts/add_inverted_index.py
+```
+
+# fetch_user_and_photos.py
+This example is written for the following access patterns.
+- Get user profile (read)
+- View recent photos for user (read)
+
+```bash
+python application/fetch_user_and_photos.py
+```
+
+Output
+```
+User<jacksonjason -- John Perry>
+Photo<jacksonjason -- 2018-05-30T15:42:38>
+Photo<jacksonjason -- 2018-06-09T13:49:13>
+Photo<jacksonjason -- 2018-06-26T03:59:33>
+Photo<jacksonjason -- 2018-07-14T10:21:01>
+Photo<jacksonjason -- 2018-10-06T22:29:39>
+Photo<jacksonjason -- 2018-11-13T08:23:00>
+Photo<jacksonjason -- 2018-11-18T15:37:05>
+Photo<jacksonjason -- 2018-11-26T22:27:44>
+Photo<jacksonjason -- 2019-01-02T05:09:04>
+Photo<jacksonjason -- 2019-01-23T12:43:33>
+Photo<jacksonjason -- 2019-03-03T02:00:01>
+Photo<jacksonjason -- 2019-03-03T18:20:10>
+Photo<jacksonjason -- 2019-03-11T15:18:22>
+Photo<jacksonjason -- 2019-03-30T02:28:42>
+Photo<jacksonjason -- 2019-04-14T21:52:36>
 ```

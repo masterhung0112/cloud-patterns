@@ -7,7 +7,6 @@ dynamodb = boto3.client('dynamodb')
 FOLLOWED_USER = 'tmartinez'
 FOLLOWING_USER = 'john42'
 
-
 def follow_user(followed_user, following_user):
     user = "USER#{}".format(followed_user)
     friend = "#FRIEND#{}".format(following_user)

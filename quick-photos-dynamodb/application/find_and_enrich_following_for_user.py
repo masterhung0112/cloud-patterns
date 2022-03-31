@@ -6,7 +6,6 @@ dynamodb = boto3.client("dynamodb")
 
 USERNAME = "haroldwatkins"
 
-
 def find_and_enrich_following_for_user(username):
     friend_value = "#FRIEND#{}".format(username)
     resp = dynamodb.query(
