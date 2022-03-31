@@ -28,11 +28,6 @@ aws sns list-topics
 # }
 ```
 
-Delete SNS
-```bash
-aws cloudformation delete-stack --stack-name sns-hello-world
-```
-
 Check if SQS is existing
 ```bash
 aws sqs list-queues
@@ -42,6 +37,11 @@ aws sqs list-queues
 #         "https://sqs.us-east-1.amazonaws.com/475910951137/hello-world.fifo"
 #     ]
 # }
+```
+
+Delete the entire resources
+```bash
+aws cloudformation delete-stack --stack-name sns-hello-world
 ```
 
 # Step
