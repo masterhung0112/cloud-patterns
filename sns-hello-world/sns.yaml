@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create SNS
+
+Parameters: 
+  TopicNameFifo:
+    Type: String
+    Default: hello-world.fifo
+  TopicName:
+    Type: String
+    Default: hello-world
+  
+Resources: 
+  # FIFO SNS
+  HelloWorldFifo:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Ref TopicNameFifo
+      FifoTopic: true
+  HelloWorldQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Ref TopicNameFifo
+      FifoQueue:  true
+  
+  # Subscribe the FIFO SNS to FIFO SQS
+  HelloWorldFiFoSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt HelloWorldQueue.Arn
+      TopicArn: !Ref HelloWorldFifo
+  
+  # Non-FIFO SNS
+  HelloWorld:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Ref TopicName
+
+Outputs:
+  HelloWorldQueueArn:
+    Description: Queue ARN for FIFO Queue
+    Value: !GetAtt HelloWorldQueue.Arn
+  # HelloWorldSNQArn:
+  #   Description: SNS ARN for FIFO Queue
+  #   Value: !GetAtt HelloWorldFifo.Arn
