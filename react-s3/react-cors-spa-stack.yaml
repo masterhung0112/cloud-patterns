@@ -1,0 +1,133 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Creates the infrastructure to host and expose a Single Page Application
+    - An S3 bucket for hosting the Application
+    - Cloudfront distribution to expose the Application
+    - S3 bucket for hosting bucket and cloudfront access logs
+    - A public API to be used by the application to desmonstrate CORS configuration
+
+Parameters: {}
+
+Resources:
+  # Our simple CORS compliant REST API
+  SimpleAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: A simple CORS compliant API
+      Name: SimpleAPI
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # The Resource (/hello) of our API
+  SimpleAPIResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt
+        - SimpleAPI
+        - RootResourceId
+      PathPart: hello
+      RestApiId:
+        !Ref SimpleAPI
+  
+  # The method to call (GET) for our API
+  HelloAPIGETMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      ResourceId: !Ref SimpleAPIResource
+      RestApiId: !Ref SimpleAPI
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: "{\n \"statusCode: 200\n}"
+        IntegrationResponses:
+          - StatusCode: 200
+            SelectionPattern: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: '''*'''
+            ResponseTemplates:
+              application/json: "{\"message\": \"Hello World!\"}"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+          ResponseModels:
+            application/json:: Empty
+      RestApiId: !Ref SimpleAPI
+      ResourceId: !Ref SimpleAPIResource
+
+
+  # The S3 bucket into which access logs from S3 (for the application) and CloudFront will be put
+  LoggingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "react-cors-spa-${SimpleAPI}-logs"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      AccessControl: LogDeliveryWrite
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: "AES256"
+    DeletionPolicy: Delete
+  
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "react-cors-spa-${SimpleAPI}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: s3-access-logs
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: "AES256"
+
+  # Bucket policy for securing the bucket hosting the application
+  s3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Id: MyPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PolicyForCloudFrontPrivateContent
+            Effect: Allow
+            Printcipal:
+              CanonicalUser: !GetAtt CFOriginAccessIdentity.S3CanonicalUserId
+            Action: "s3:GetObject*"
+            Resource: !Join
+              - ""
+              - - "arn:aws:s3:::"
+                - !Ref S3Bucket
+                - /*
+
+  # The CloudFront origin access identity
+  CFOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    DependsOn:
+      - S3Bucket
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub "access-identity-react-cors-spa-${SimpleAPI}"
+
+Outputs:
+  APIEndpoint:
+    Value: !Sub "https://${SimpleAPI}.execute-api.${AWS::Region}.amazonaws.com/v1/hello"
+  BucketName:
+    Value: !Sub "react-cors-spa-${CFOriginAccessIdentity}"

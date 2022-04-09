@@ -1,0 +1,5 @@
+{
+    "yaml.schemas": {
+        "https://raw.githubusercontent.com/awslabs/goformation/master/schema/cloudformation.schema.json": "file:///home/hung/work/cloud-patterns/react-s3/react-cors-spa-stack.yaml"
+    }
+}
