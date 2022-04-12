@@ -59,6 +59,14 @@ Resources:
       RestApiId: !Ref SimpleAPI
       ResourceId: !Ref SimpleAPIResource
 
+  # A deployment resource for deploying our API
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - HelloAPIGETMethod
+    Properties:
+      RestApiId: !Ref SimpleAPI
+      StageName: v1
 
   # The S3 bucket into which access logs from S3 (for the application) and CloudFront will be put
   LoggingBucket:

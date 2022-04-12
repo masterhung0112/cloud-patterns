@@ -3,7 +3,7 @@ import "./App.css";
 import { useFetch } from "react-async";
 
 // const APIEndPoint = 'to be replaced with your api endpoint here'
-const APIEndPoint = 'https://4gxqbwo4b0.execute-api.us-west-2.amazonaws.com/v1/hello'
+const APIEndPoint = 'https://v85vtnikik.execute-api.us-west-2.amazonaws.com/v1/hello'
 
 function App() {
   return (

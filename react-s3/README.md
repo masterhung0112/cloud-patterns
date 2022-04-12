@@ -19,10 +19,12 @@ Several services will be configured. Example, Route 53...
 - Copy the value of `APIEndpoint` to `src/App.js`
 - Build the application package: `yarn build`
 - Upload the content of the `build` folder into the S3 bucket identified by `Bucket`
-    - Command: `aws s3 cp --recursive build s3://react-cors-spa-4gxqbwo4b0`
-
+    - Command: `aws s3 cp --recursive build s3://react-cors-spa-v85vtnikik`
+- Open the CloudFront Distribution and open the URL in `Distribution domain name`
 # Clean up
 - Delete the S3 bucket contents
+    - `aws s3 rm s3://react-cors-spa-4gxqbwo4b0 --recursive`
+    - `aws s3 rm s3://react-cors-spa-4gxqbwo4b0-logs --recursive`
 - Delete the AWS CloudFormation stack
 
 # Commands
