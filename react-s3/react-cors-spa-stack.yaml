@@ -42,7 +42,7 @@ Resources:
         Type: MOCK
         PassthroughBehavior: WHEN_NO_MATCH
         RequestTemplates:
-          application/json: "{\n \"statusCode: 200\n}"
+          application/json: "{\n \"statusCode\": 200\n}"
         IntegrationResponses:
           - StatusCode: 200
             SelectionPattern: 200
@@ -55,7 +55,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: true
           ResponseModels:
-            application/json:: Empty
+            application/json: Empty
       RestApiId: !Ref SimpleAPI
       ResourceId: !Ref SimpleAPIResource
 
@@ -118,15 +118,6 @@ Resources:
                 - !Ref S3Bucket
                 - /*
 
-  # The CloudFront origin access identity
-  CFOriginAccessIdentity:
-    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
-    DependsOn:
-      - S3Bucket
-    Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: !Sub "access-identity-react-cors-spa-${SimpleAPI}"
-
   # The Amazon CloudFront distribution exposing our Single Page Application
   CFDistribution:
     Type: AWS::CloudFront::Distribution
@@ -148,13 +139,24 @@ Resources:
             - GET
             - HEAD
             - OPTIONS
+          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized
+          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html
           OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf # CORS-S3Origin
         PriceClass: PriceClass_All
         Logging:
           Bucket: !GetAtt LoggingBucket.RegionalDomainName
           Prefix: 'cloudfront-access-logs'
-        
+
+  # The CloudFront origin access identity
+  CFOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    DependsOn:
+      - S3Bucket
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub "access-identity-react-cors-spa-${SimpleAPI}"
+
 Outputs:
   APIEndpoint:
     Value: !Sub "https://${SimpleAPI}.execute-api.${AWS::Region}.amazonaws.com/v1/hello"
