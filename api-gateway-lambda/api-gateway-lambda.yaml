@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create HTTP and REST API Gateway for Lambda
+
+Parameters:
+  apiGatewayStageName:
+    Type: String
+    AllowedPattern: "[a-z0-9]+"
+    Default: call
+  lambdaFunctionName:
+    Type: String
+    Default: api-gateway-hello-world
+  apiGatewayHTTPMethod:
+    Type: String
+    Default: POST
+
+Resources:
+  HelloWorldRestAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: HelloWorldRestApi
+      Description: Hello World REST API For Lambda proxy integration
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  HelloWorldApiGatewayResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      PathPart: !Ref lambdaFunctionName
+      RestApiId: !Ref HelloWorldRestAPI
+      ParentId: !GetAtt 
+        - HelloWorldRestAPI
+        - RootResourceId
+
+  HelloWorldGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      ResourceId: !Ref HelloWorldApiGatewayResource
+      RestApiId: !Ref HelloWorldRestAPI
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        PassthroughBehavior: WHEN_NO_MATCH
+        Type: AWS_PROXY
+        Uri: !Sub 
+          - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldLambda.Arn}/invocations'
+          - lambdaArn: !GetAtt HelloWorldLambda.Arn
+        IntegrationHttpMethod: POST
+
+  lambdaApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt HelloWorldLambda.Arn
+      Principal: apigateway.amazonaws.com
+      # note: if route *not* at API Gateway root, `SourceArn` would take the form of:
+      #               arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${apiGateway}/${apiGatewayStageName}/${apiGatewayHTTPMethod}/PATH_PART
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HelloWorldRestAPI}/${apiGatewayStageName}/POST/
+
+  HelloWorldGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - HelloWorldGetMethod
+    Properties:
+      RestApiId: !Ref HelloWorldRestAPI
+      StageName: !Ref apiGatewayStageName
+
+  HelloWorldLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: HelloWorldLambdaRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Effect: Allow
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${lambdaFunctionName}:*
+      
+          PolicyName: lambda
+
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${lambdaFunctionName}
+      RetentionInDays: 5
+
+  HelloWorldLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref lambdaFunctionName
+      Handler: index.my_handler
+      Code:
+        ZipFile: |
+          def my_handler(event, context):
+            message = 'Hello lambda World!'
+            return message
+      Role: !GetAtt HelloWorldLambdaRole.Arn
+      Runtime: 'python3.8'
+
+Outputs:
+  apiGatewayInvokeURL:
+    Value: !Sub https://${HelloWorldRestAPI}.execute-api.${AWS::Region}.amazonaws.com/${apiGatewayStageName}
