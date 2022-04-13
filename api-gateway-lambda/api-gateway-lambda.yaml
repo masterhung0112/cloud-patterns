@@ -41,7 +41,7 @@ Resources:
       ApiKeyRequired: false
       AuthorizationType: NONE
       Integration:
-        PassthroughBehavior: WHEN_NO_MATCH
+        # PassthroughBehavior: WHEN_NO_MATCH
         Type: AWS_PROXY
         Uri: !Sub 
           - 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldLambda.Arn}/invocations'
@@ -104,8 +104,7 @@ Resources:
       Code:
         ZipFile: |
           def my_handler(event, context):
-            message = 'Hello lambda World!'
-            return message
+            return {"statusCode": 200, "body": "Hello World"}
       Role: !GetAtt HelloWorldLambdaRole.Arn
       Runtime: 'python3.8'
 
